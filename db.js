@@ -15,11 +15,8 @@ const getThreadId = async (userId) => {
     });
 }
 
-const setThreadId = async (userId, threadId) => {
-    return new Promise((resolve, reject) => {
-        db.set(userId, threadId);
-        resolve();
-    });
+const setThreadId = (userId, threadId) => {
+    db.set(userId, threadId);
 }
 
 module.exports = {

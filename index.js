@@ -1,8 +1,8 @@
 require("dotenv").config();
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, Partials, ChannelType } = require("discord.js");
 const client = new Client({
-    intents: [GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
-    partials: ["CHANNEL", "MESSAGE", "DM_CHANNEL"],
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.DirectMessages, GatewayIntentBits.MessageContent],
+    partials: [Partials.Channel],
 });
 
 const db = require("./db");
@@ -13,24 +13,23 @@ client.on("ready", () => {
 });
 
 client.on("messageCreate", (message) => {
-    console.log(`Message from ${message.author.tag}: ${message.content}`)
-    if (message.channel.type === "DM") {
-        console.log("detected dm")
-        if (message.channel.messages.cache.first() === message) {
-            console.log("detected first message")
-            retuneAPI.createThread().then((threadId) => {
-                retuneAPI.sendResponse(threadId, message.content).then((data) => {
-                    message.channel.send(data.output);
+    if (message.channel.type === ChannelType.DM && !message.author.bot) {
+        message.reply("Loading...").then((reply) => {
+            db.getThreadId(message.author.id)
+                .then((threadId) => {
+                    retuneAPI.sendResponse(threadId, message.content).then((response) => {
+                        reply.edit(response);
+                    });
+                })
+                .catch(() => {
+                    retuneAPI.createThread().then((threadId) => {
+                        retuneAPI.sendResponse(threadId, message.content).then((response) => {
+                            reply.edit(response);
+                        });
+                        db.setThreadId(message.author.id, threadId);
+                    });
                 });
-                db.setThreadId(message.author.id, threadId);
-            });
-        } else {
-            db.getThreadId(message.author.id).then((threadId) => {
-                retuneAPI.sendResponse(threadId, message.content).then((data) => {
-                    message.channel.send(data.output);
-                });
-            });
-        }
+        }).catch(console.error);
     }
 });
 

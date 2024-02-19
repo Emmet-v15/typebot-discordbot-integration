@@ -34,7 +34,7 @@ const sendResponse = async (threadId, message) => {
         }).then((res) => {
             return res.json();
         }).then((data) => {
-            resolve(data);
+            resolve(data.response.value);
         }).catch((err) => {
             reject(err);
         });
